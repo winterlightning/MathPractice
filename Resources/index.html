@@ -1,0 +1,366 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+	<title>MathKid</title>
+
+	<link type="text/css" rel="stylesheet" href="css/mathkid.css" />
+	<style type="text/css">
+	html, body {
+		width:		100%;
+		height:		100%;					
+		padding:	0;
+		margin:		0;
+		overflow:	auto; /* when page gets too small for container min-width/height */
+	}
+	#container {
+		min-height:	300px;
+		min-width:	600px;
+		position:	absolute;
+		top:		0px;	/* margins in pixels */
+		bottom:		0px;	/* could also use a percent */
+		left:		0px;
+		right:		0px;
+	}
+	.pane {
+		display:	none; /* will appear when layout inits */
+	}
+	
+	/* Button bar */
+	#buttonbar {
+		float: left;
+		padding: 8px;
+		padding-right: 0px;
+		padding-left: 9px;
+		padding-top: 5px;
+	}
+	
+	#buttonbar a {
+		-webkit-box-shadow: 0px 0px 0px;
+		box-shadow: 0px 0px 1px #DDD;
+		padding: 0px 8px;
+		text-shadow: none;
+		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(249,249,249,1)), color-stop(6%,rgba(249,249,249,1)), color-stop(22%,rgba(242,241,242,1)), color-stop(83%,rgba(204,204,204,1)), color-stop(100%,rgba(196,195,196,1)));			
+		padding-top: 5px;
+		border-left: 1px solid #434343;
+		float: left;
+		color: #333;
+		display: block;
+		cursor: pointer;
+		height: 18px;
+		font-size: 11px;
+		border-top: 1px solid #343434;
+		border-bottom: 1px solid #343434;
+	}
+	
+	#buttonbar .roundedright {
+		border-right: 1px solid #343434;
+		-webkit-border-radius: 0px 10px 10px 0px;
+		border-radius: 0px 5px 5px 0px;
+		margin-right: 12px;
+	}		
+
+	#buttonbar .roundedleft {
+		border-left: 1px solid #343434;
+		border-radius: 10px 0px 0px 10px;
+		-webkit-border-radius: 5px 0px 0px 5px;
+	}
+
+	#buttonbar a.filter:hover, #buttonbar a.active {
+		color: white;
+		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(184,184,184,1)), color-stop(6%,rgba(184,184,184,1)), color-stop(22%,rgba(182,176,182,1)), color-stop(83%,rgba(151,151,151,1)), color-stop(100%,rgba(145,143,145,1)));		
+	}
+
+	/*icon bar */
+	#iconbar {
+		float: right;
+		padding-right: 0px;
+		padding-right: 9px;
+		padding-top: 0px;
+	}
+	
+	#iconbar .icon {
+		padding: 5px;
+		margin: 2px;
+	}
+	
+	#iconbar .icon:hover {
+		border: 1px solid #999;
+		margin: 1px;
+		-webkit-border-radius: 5px 5px 5px 5px;
+		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(249,249,249,1)), color-stop(6%,rgba(249,249,249,1)), color-stop(22%,rgba(242,241,242,1)), color-stop(83%,rgba(204,204,204,1)), color-stop(100%,rgba(196,195,196,1)));			
+	}
+	
+	#iconbar .icon:active {
+		-webkit-box-shadow: inset 0 0 2px 2px #d3d3d3;
+	}
+
+	/*answer*/
+	#answer {
+		background-color: transparent; 
+		border: none;
+		color: white;
+	}
+	
+	input::-webkit-input-placeholder {
+		color: white;
+	}
+	
+	input[type="text"]:focus {
+		outline: none;
+	}
+	/*ui center*/
+	.ui-layout-center {
+		border-top: 1px solid #444;
+		border-bottom: 1px solid #444;
+		z-index: 0;
+	}
+	
+	/*notifications*/
+	#notifications {
+		z-index: 100;
+	}
+	
+	.ui-notify-message p {
+		font-size: 12px;
+	}
+	</style>
+
+	<script type="text/javascript" src="javascripts/jquery-1.6.min.js"></script>
+	<script type="text/javascript" src="javascripts/jquery.ui.1.8.10.min.js"></script>
+	<script type="text/javascript" src="javascripts/jquery.layout-latest.js"></script>
+	
+	<!--notification stuff -->
+	<link type="text/css" rel="stylesheet" href="css/ui.notify.css">
+	<script src="javascripts/jquery.notify.min.js" type="text/javascript" charset="utf-8"></script>
+	
+	<script type="text/javascript">
+
+	$(document).ready(function () {
+		$('#container').layout({
+			applyDefaultStyles: false,
+			north: {
+				resizable: false
+		   	},		
+		   	south: {
+				resizable: false
+		   	}
+		});
+		
+		$container = $("#notifications").notify();
+		
+		/*Submit function*/
+		$('#answer_form').submit(function() {
+			validate_solution();
+			return false;
+		});
+		
+	});
+
+	current_problem = "";
+	current_answer = -1;
+
+	addition = true;
+	subtraction = false;
+	multiplication = false;
+	division = false;
+
+	counter = 0;
+	difficulty = 1;
+	correct= 0;
+	incorrect=0;
+
+	function populate_problem(varone, vartwo, operator, answer) {
+		$("#var1").html(String(varone));
+		$("#operator").html(String(operator));
+		$("#var2").html(String(vartwo));
+		$("#answer").val("");
+		
+		current_problem = String(varone) + " " + String(operator) + " " + String(vartwo) + " = " + String(answer);
+		current_answer = answer;
+	};
+
+	function validate_solution() {
+		user_answer = $("#answer").val();
+		
+		if ( String(user_answer) == String(current_answer) ) {
+			create("default", { title:'Correct', text: current_problem });
+			counter++;
+			correct++;
+			$("#correct").html(correct);
+		}
+		else {
+			create("default", { title:'Incorrect', text: current_problem });
+			counter--;
+			incorrect++;
+			$("#incorrect").html(incorrect);
+		};
+		
+		if (counter == 10) {
+			if (difficulty >= 1) {
+				difficulty++;
+				counter = 0;
+				$("#difficulty").html(difficulty);
+			};
+		};
+		
+		generate_question();
+	};
+
+	function create( template, vars, opts ){
+		return $container.notify("create", template, vars, opts);
+	};
+
+	/*return a random number from 1 to x*/
+	function rand(x) {
+		var randomnumber=Math.floor(Math.random()*(x+1));
+		return randomnumber;
+	};
+
+	function init() {
+		$("#initial").hide();
+		$("#answer_form").show();
+
+		counter = 0;
+		difficulty = 1;
+		correct= 0;
+		incorrect=0;
+
+		generate_question();
+	};
+
+	function generate_question() {
+		a = rand(10 * difficulty);
+		b = rand(10);
+		
+		if ( addition ) {
+			populate_problem(a, b, "+", (a+b) );
+		};
+		
+		if ( subtraction ) {
+			populate_problem(a, b, "-", (a-b) );
+		};
+
+		if ( multiplication ) {
+			populate_problem(a, b, "*", (a*b) );
+		};
+		
+		if ( division ) {
+			while (a==0 && b== 0 ) {
+				a = rand(10);
+				b = rand(10);
+			};
+			
+			populate_problem(a*b, b, "/", (a) );
+		};
+		
+	};
+	
+	function toggle_type ( type ) {
+		
+		difficulty = 1;
+		
+		subtraction = false;
+		multiplication = false;
+		division = false;
+		addition = false;
+		
+		switch(type)
+		{
+			case "addition":
+				addition = true;
+				$(".active").removeClass("active");
+				$("#addition").addClass("active");
+				break;
+			case "subtraction":
+				subtraction = true;
+				$(".active").removeClass("active");
+				$("#subtraction").addClass("active");
+			  	break;
+			case "multiplication":
+				multiplication = true;
+				$(".active").removeClass("active");
+				$("#multiplication").addClass("active");
+			  	break;
+			case "division":
+				division = true;
+				$(".active").removeClass("active");
+				$("#division").addClass("active");
+			  	break;
+			default:
+			  alert("ERROR");
+		};
+	};
+	</script>
+
+</head>
+<body>
+<div id="container">
+	<div class="pane ui-layout-center" style="background: url('Professor_presentation.jpg') fixed center top no-repeat #b4ba00;">
+		<form id="answer_form" style="display: none">
+			<div id="problem" style="margin: 0 auto; width: 500px; position: relative; top: 50px; font-size: 60px; color: #fff;">
+				<p><span id="var1">1</span> <span id="operator">+</span> <span id="var2">1</span> =<input id="answer" type="text" placeholder="?" style="position: relative; top: -2px; font-size: 60px; width: 120px" autocomplete="off"/></p>
+			</div>
+		</form>
+		
+		<div id="initial" style="margin: 0 auto; width: 700px; position: relative; top: 10px; font-size: 60px; color: #fff; padding-left: 200px">
+			<p style="">Welcome to Mathkid!</p>
+			<p id="instructions" style="font-size: 20px; padding-left: 100px;">
+				1. Click on the play button on the top right to start!<br />
+				2. Click on the ? and type in the answer, press return to check it!<br />
+				3. Click on the play button again to reset the game.<br />
+			</p>
+		</div>
+		
+		<div id="scoreboard" style="Width: 390px; position: absolute; top: 10px; background-color:  #000; opacity:  0.6; color:  #fff; padding: 10px; font-size: 20px; border-radius: 7px 7px;">
+			<p style="margin: 0px; align: center;">Correct: <span id="correct">0</span> Incorrect: <span id="incorrect">0</span> Difficulty: <span id="difficulty">1</span></p>
+		</div>
+	</div>
+	<div class="pane ui-layout-north hidden">		
+		<div id="buttonbar">
+			<a id="addition" class="filter roundedleft active" onclick="toggle_type ( 'addition' )">+ addition</a>
+			<a id="subtraction" class="filter " onclick="toggle_type ( 'subtraction' )">- Subtraction</a>
+			<a id="multiplication" class="filter" onclick="toggle_type ( 'multiplication' )">* Multiplication</a>	
+			<a id="division" class="roundedright filter" onclick="toggle_type ( 'division' )">/ Division</a>				
+		</div>
+		
+		<div id="iconbar">
+			<a onclick="init()"><img class="icon" src="icons/156-controller.png" /></a>
+		</div>
+	</div>
+	<div class="pane ui-layout-south"><p style="padding: 2px; margin: 0px; font-size: 12px; color: #eee; padding-left: 10px; position: relative; top: -2px;">© Ray W. 2011</p></div>
+
+	<!--- container to hold notifications, and default templates --->
+	<div id="notifications" style="display:none">
+
+		<div id="default">
+			<h1>#{title}</h1>
+			<p>#{text}</p>
+		</div>
+
+		<div id="sticky">
+			<a class="ui-notify-close ui-notify-cross" href="#">x</a>
+			<h1>#{title}</h1>
+			<p>#{text}</p>
+		</div>
+
+		<div id="withIcon">
+			<a class="ui-notify-close ui-notify-cross" href="#">x</a>
+			<div style="float:left;margin:0 10px 0 0"><img src="#{icon}" alt="warning" /></div>
+			<h1>#{title}</h1>
+			<p>#{text}</p>
+		</div>
+
+		<div id="buttons">
+			<h1>#{title}</h1>
+			<p>#{text}</p>
+			<p style="margin-top:10px;text-align:center">
+				<input type="button" class="confirm" value="Close Dialog" />
+			</p>
+		</div>
+	</div>
+
+</div>
+</body>
+</html>
